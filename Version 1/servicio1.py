@@ -12,43 +12,41 @@ class Servicio1:
         self.port_servidor = 8001 
         self.port_destino = 8002  
         self.servidor_activo = True
-        self.largo_minimo = 0
-        self.palabra_inicial = ""
+        self.largo_min = 0
+        self.p_inicial = ""
 
     def iniciar_interaccion(self):
-        """Solicita los datos iniciales y comienza el juego"""
-        print("=== SERVICIO 1 - INICIO DE INTERACCIÓN ===")
+        print("SERVICIO 1")
         
         while True:
             try:
-                self.largo_minimo = int(input("Ingrese el largo mínimo del mensaje final: "))
-                if self.largo_minimo > 0:
+                self.largo_min = int(input("Ingrese el largo mínimo mensaje final: "))
+                if self.largo_min > 0:
                     break
                 else:
-                    print("El largo mínimo debe ser mayor a 0")
+                    print("Largo mínimo debe ser mayor a 0")
             except ValueError:
-                print("Por favor, ingrese un número válido")
+                print("Numero no valido")
         
-        self.palabra_inicial = input("Ingrese la palabra inicial: ").strip()
-        while not self.palabra_inicial:
-            self.palabra_inicial = input("La palabra no puede estar vacía. Ingrese la palabra inicial: ").strip()
+        self.p_inicial = input("Palabra inicial: ").strip()
+        while not self.p_inicial:
+            self.p_inicial = input("No puede estar vacía. Ingresar palabra inicial: ").strip()
         
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        largo_actual = len(self.palabra_inicial.split())
-        mensaje = f"{timestamp}-{self.largo_minimo}-{largo_actual}-{self.palabra_inicial}"
+        l_actual = len(self.p_inicial.split())
+        mensaje = f"{timestamp}-{self.largo_min}-{l_actual}-{self.p_inicial}"
         
         print(f"Enviando mensaje inicial: {mensaje}")
         self.enviar_a_servicio2(mensaje)
 
     def enviar_a_servicio2(self, mensaje):
-        """Envía mensaje al servicio 2 vía TCP"""
         try:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
                 sock.connect((self.host, self.port_destino))
                 sock.send(mensaje.encode('utf-8'))
-                print(f"Mensaje enviado al Servicio 2: {mensaje}")
+                print(f"Mensaje enviado a Servicio 2: {mensaje}")
         except Exception as e:
-            print(f"Error enviando mensaje al Servicio 2: {e}")
+            print(f"Error enviando mensaje a Servicio 2: {e}")
 
     def manejar_cliente(self, conn, addr):
         try:
@@ -60,29 +58,27 @@ class Servicio1:
             
             if self.es_mensaje_finalizacion(data):
                 print("Señal de finalización recibida del Servicio 4")
-                self.finalizar_servicio()
+                self.fin_servicio()
                 return
             
             patron = r'^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})-(\d+)-(\d+)-(.+)$'
             match = re.match(patron, data)
             
             if match:
-                timestamp, largo_minimo, largo_actual, mensaje_actual = match.groups()
+                timestamp, largo_min, l_actual, mensaje_actual = match.groups()
                 
-                nueva_palabra = input("Ingrese una nueva palabra: ").strip()
-                while not nueva_palabra:
-                    nueva_palabra = input("La palabra no puede estar vacía. Ingrese una nueva palabra: ").strip()
+                nuevapalabra = input("Nueva palabra: ").strip()
+                while not nuevapalabra:
+                    nuevapalabra = input("No puede estar vacía >:c. Ingrese nueva palabra: ").strip()
                 
-                mensaje_actualizado = f"{mensaje_actual} {nueva_palabra}"
-                nuevo_largo = len(mensaje_actualizado.split())
+                m_actualizado = f"{mensaje_actual} {nuevapalabra}"
+                nuevo_largo = len(m_actualizado.split())
                 nuevo_timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 
-                mensaje_completo = f"{nuevo_timestamp}-{largo_minimo}-{nuevo_largo}-{mensaje_actualizado}"
+                mensaje_completo = f"{nuevo_timestamp}-{largo_min}-{nuevo_largo}-{m_actualizado}"
                 
                 print(f"Mensaje actualizado: {mensaje_completo}")
-                
-                # Enviar al servicio 2
-                time.sleep(1)  # Pequeña pausa para evitar conflictos
+                time.sleep(1)  
                 self.enviar_a_servicio2(mensaje_completo)
             else:
                 print("Error: Formato de mensaje inválido en Servicio 1")
@@ -93,11 +89,9 @@ class Servicio1:
             conn.close()
 
     def es_mensaje_finalizacion(self, mensaje):
-        """Verifica si el mensaje es una señal de finalización"""
         return mensaje.count('-') == 1 and "FIN" in mensaje.upper()
 
-    def enviar_finalizacion_siguiente(self):
-        """Envía señal de finalización al siguiente servicio en la cadena"""
+    def enviar_fin_sig(self):
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         mensaje_fin = f"{timestamp}-FIN_CADENA"
         
@@ -107,11 +101,10 @@ class Servicio1:
                 sock.send(mensaje_fin.encode('utf-8'))
                 print(f"Señal de finalización enviada al Servicio 2: {mensaje_fin}")
         except Exception as e:
-            print(f"Error enviando señal de finalización: {e}")
+            print(f"Error enviando señal finalización: {e}")
 
-    def finalizar_servicio(self):
-        """Finaliza el servicio ordenadamente"""
-        print("Finalizando Servicio 1...")
+    def fin_servicio(self):
+        print("finalizando servicio 1...")
         self.servidor_activo = False
 
     def ejecutar_servidor(self):
@@ -145,14 +138,13 @@ class Servicio1:
         servidor_thread.start()
         
         self.iniciar_interaccion()
-        
         try:
             while self.servidor_activo:
                 time.sleep(1)
         except KeyboardInterrupt:
-            print("\nInterrupción detectada. Finalizando...")
+            print("\nSe produjo una interrupcion, finalizando :c")
         finally:
-            self.finalizar_servicio()
+            self.fin_servicio()
 
 if __name__ == "__main__":
     servicio = Servicio1()
