@@ -1,9 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Servicio 2 - Servidor TCP (recibe de Servicio 1) / Cliente UDP (envía a Servicio 3)
-Laboratorio 1 - Redes de Computadores
-"""
+#LIBRERÍAS NECESARIAS-------------------------------------------------------
 
 import socket
 import datetime
@@ -11,14 +6,23 @@ import threading
 import time
 import re
 
-# Configuración global
+#VARIABLES NECESARIAS-------------------------------------------------------
+
 HOST = 'localhost'
-PORT_SERVIDOR = 8002  # Puerto donde escucha este servicio
-PORT_DESTINO = 8003   # Puerto del servicio 3 (UDP)
+PORT_SERVIDOR = 8002  
+PORT_DESTINO = 8003   
 servidor_activo = True
 
+#FUNCIÓN ENVIAR MENSAJE AL SERVICIO 3 VÍA UDP-------------------------------
+#     Esta función se encarga de establecer una conexión UDP con el Servicio 3
+#     y enviar el mensaje correspondiente. UDP es un protocolo sin conexión
+#     que no garantiza la entrega, pero es más rápido que TCP.
+#
+#     PARÁMETROS:
+#          mensaje = cadena de texto que será enviada al Servicio 3 vía UDP
+#---------------------------------------------------------------------------
+
 def enviar_a_servicio3_udp(mensaje):
-    """Envía mensaje al servicio 3 vía UDP"""
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as sock:
             sock.sendto(mensaje.encode('utf-8'), (HOST, PORT_DESTINO))
@@ -26,13 +30,32 @@ def enviar_a_servicio3_udp(mensaje):
     except Exception as e:
         print(f"Error enviando mensaje al Servicio 3: {e}")
 
+#FUNCIÓN VERIFICAR MENSAJE DE FINALIZACIÓN----------------------------------
+#     Esta función utiliza expresiones regulares para verificar si un mensaje
+#     recibido corresponde a una señal de finalización del sistema. El patrón
+#     esperado es: YYYY-MM-DD HH:MM:SS-FIN
+#
+#     PARÁMETROS:
+#          mensaje = cadena de texto a verificar
+#     
+#     RETORNA:
+#          bool = True si es mensaje de finalización, False en caso contrario
+#---------------------------------------------------------------------------
+
 def es_mensaje_finalizacion(mensaje):
-    """Verifica si es un mensaje de finalización"""
     patron = r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}-FIN'
     return bool(re.match(patron, mensaje))
 
+#FUNCIÓN ENVIAR FINALIZACIÓN AL SIGUIENTE SERVICIO-------------------------
+#     Esta función construye y envía la señal de finalización al siguiente
+#     servicio en la cadena utilizando protocolo UDP. Genera un timestamp
+#     actual y construye el mensaje con formato timestamp-FIN_CADENA.
+#
+#     PARÁMETROS:
+#          Ninguno
+#---------------------------------------------------------------------------
+
 def enviar_finalizacion_siguiente():
-    """Envía señal de finalización al siguiente servicio en la cadena"""
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     mensaje_fin = f"{timestamp}-FIN_CADENA"
     
@@ -43,8 +66,18 @@ def enviar_finalizacion_siguiente():
     except Exception as e:
         print(f"Error enviando señal de finalización: {e}")
 
+#FUNCIÓN MANEJAR CLIENTE TCP------------------------------------------------
+#     Esta función se ejecuta en un hilo separado para manejar cada conexión
+#     TCP que llega al servidor desde el Servicio 1. Procesa los mensajes,
+#     verifica señales de finalización y solicita nueva palabra al usuario
+#     para continuar la cadena de mensajes.
+#
+#     PARÁMETROS:
+#          conn = objeto de conexión del socket cliente TCP
+#          addr = dirección del cliente conectado
+#---------------------------------------------------------------------------
+
 def manejar_cliente(conn, addr):
-    """Maneja conexiones entrantes desde el servicio 1"""
     global servidor_activo
     try:
         data = conn.recv(1024).decode('utf-8')
@@ -53,26 +86,25 @@ def manejar_cliente(conn, addr):
             
         print(f"Mensaje recibido de Servicio 1: {data}")
         
-        # Verificar si es señal de finalización
+        # VERIFICAR SI ES SEÑAL DE FINALIZACIÓN------------------------------
         if es_mensaje_finalizacion(data):
             print("Señal de finalización recibida del Servicio 1")
             enviar_finalizacion_siguiente()
             servidor_activo = False
             return
         
-        # Procesar mensaje normal usando regex para parsing correcto
+        # PROCESAR MENSAJE NORMAL CON EXPRESIONES REGULARES------------------
         patron = r'^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})-(\d+)-(\d+)-(.+)$'
         match = re.match(patron, data)
         
         if match:
             timestamp, largo_minimo, largo_actual, mensaje_actual = match.groups()
             
-            # Solicitar nueva palabra
             nueva_palabra = input("Ingrese una nueva palabra: ").strip()
             while not nueva_palabra:
                 nueva_palabra = input("La palabra no puede estar vacía. Ingrese una nueva palabra: ").strip()
             
-            # Actualizar mensaje
+            # CONSTRUIR MENSAJE ACTUALIZADO----------------------------------
             mensaje_actualizado = f"{mensaje_actual} {nueva_palabra}"
             nuevo_largo = len(mensaje_actualizado.split())
             nuevo_timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -81,7 +113,7 @@ def manejar_cliente(conn, addr):
             
             print(f"Mensaje actualizado: {mensaje_completo}")
             
-            # Enviar al servicio 3 vía UDP
+            # ENVIAR VÍA UDP AL SERVICIO 3-----------------------------------
             enviar_a_servicio3_udp(mensaje_completo)
         else:
             print("Error: Formato de mensaje inválido en Servicio 2")
@@ -91,14 +123,23 @@ def manejar_cliente(conn, addr):
     finally:
         conn.close()
 
+#FUNCIÓN EJECUTAR SERVIDOR TCP----------------------------------------------
+#     Esta función ejecuta el servidor TCP que recibe conexiones del
+#     Servicio 1. Utiliza threading para manejar múltiples conexiones
+#     simultáneas y mantiene un timeout para verificar periódicamente
+#     el estado del servidor.
+#
+#     PARÁMETROS:
+#          Ninguno (utiliza variables globales)
+#---------------------------------------------------------------------------
+
 def ejecutar_servidor():
-    """Ejecuta el servidor TCP"""
     global servidor_activo
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_sock:
         server_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         server_sock.bind((HOST, PORT_SERVIDOR))
         server_sock.listen(5)
-        server_sock.settimeout(1.0)  # Timeout para permitir verificar servidor_activo
+        server_sock.settimeout(1.0)  
         
         print(f"Servicio 2 escuchando en {HOST}:{PORT_SERVIDOR}")
         
@@ -118,17 +159,18 @@ def ejecutar_servidor():
                     print(f"Error en servidor: {e}")
                 break
 
+#FUNCIÓN PRINCIPAL DEL PROGRAMA---------------------------------------------
+
 def main():
-    """Función principal"""
     global servidor_activo
     print("=== SERVICIO 2 - TCP SERVER / UDP CLIENT ===")
     
-    # Iniciar servidor
+    # INICIAR SERVIDOR TCP EN HILO SEPARADO---------------------------------
     servidor_thread = threading.Thread(target=ejecutar_servidor)
     servidor_thread.daemon = True
     servidor_thread.start()
     
-    # Mantener el servicio activo
+    # MANTENER EL SERVICIO ACTIVO-------------------------------------------
     try:
         while servidor_activo:
             time.sleep(1)
@@ -137,6 +179,8 @@ def main():
     finally:
         print("Finalizando Servicio 2...")
         servidor_activo = False
+
+#EJECUCIÓN DEL PROGRAMA PRINCIPAL-------------------------------------------
 
 if __name__ == "__main__":
     main()

@@ -1,9 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Servicio 1 - Servidor TCP que inicia la cadena del juego
-Laboratorio 1 - Redes de Computadores
-"""
+#LIBRERÍAS NECESARIAS-------------------------------------------------------
 
 import socket
 import datetime
@@ -11,14 +6,23 @@ import threading
 import time
 import re
 
-# Configuración global
+#VARIABLES NECESARIAS-------------------------------------------------------
+
 HOST = 'localhost'
-PORT_SERVIDOR = 8001  # Puerto donde escucha este servicio
-PORT_DESTINO = 8002   # Puerto del servicio 2
+PORT_SERVIDOR = 8001  
+PORT_DESTINO = 8002   
 servidor_activo = True
 
+#FUNCIÓN ENVIAR MENSAJE AL SERVICIO 2---------------------------------------
+#     Esta función se encarga de establecer una conexión TCP con el Servicio 2
+#     y enviar el mensaje correspondiente. Maneja los errores de conexión
+#     que puedan ocurrir durante el proceso de envío.
+#
+#     PARÁMETROS:
+#          mensaje = cadena de texto que será enviada al Servicio 2
+#---------------------------------------------------------------------------
+
 def enviar_a_servicio2(mensaje):
-    """Envía mensaje al servicio 2 vía TCP"""
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
             sock.connect((HOST, PORT_DESTINO))
@@ -27,11 +31,19 @@ def enviar_a_servicio2(mensaje):
     except Exception as e:
         print(f"Error enviando mensaje al Servicio 2: {e}")
 
+#FUNCIÓN INICIALIZAR INTERACCIÓN--------------------------------------------
+#     Esta función se encarga de inicializar la interacción del sistema,
+#     solicitando al usuario el largo mínimo del mensaje final y la palabra
+#     inicial. Valida las entradas y construye el mensaje inicial con
+#     formato timestamp-largo_minimo-largo_actual-palabra_inicial.
+#
+#     PARÁMETROS:
+#          Ninguno (interactúa directamente con el usuario)
+#---------------------------------------------------------------------------
+
 def iniciar_interaccion():
-    """Solicita los datos iniciales y comienza el juego"""
     print("=== SERVICIO 1 - INICIO DE INTERACCIÓN ===")
     
-    # Solicitar largo mínimo
     while True:
         try:
             largo_minimo = int(input("Ingrese el largo mínimo del mensaje final: "))
@@ -42,12 +54,10 @@ def iniciar_interaccion():
         except ValueError:
             print("Por favor, ingrese un número válido")
     
-    # Solicitar palabra inicial
     palabra_inicial = input("Ingrese la palabra inicial: ").strip()
     while not palabra_inicial:
         palabra_inicial = input("La palabra no puede estar vacía. Ingrese la palabra inicial: ").strip()
     
-    # Crear mensaje inicial
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     largo_actual = len(palabra_inicial.split())
     mensaje = f"{timestamp}-{largo_minimo}-{largo_actual}-{palabra_inicial}"
@@ -55,13 +65,32 @@ def iniciar_interaccion():
     print(f"Enviando mensaje inicial: {mensaje}")
     enviar_a_servicio2(mensaje)
 
+#FUNCIÓN VERIFICAR MENSAJE DE FINALIZACIÓN----------------------------------
+#     Esta función utiliza expresiones regulares para verificar si un mensaje
+#     recibido corresponde a una señal de finalización del sistema. El patrón
+#     esperado es: YYYY-MM-DD HH:MM:SS-FIN
+#
+#     PARÁMETROS:
+#          mensaje = cadena de texto a verificar
+#     
+#     RETORNA:
+#          bool = True si es mensaje de finalización, False en caso contrario
+#---------------------------------------------------------------------------
+
 def es_mensaje_finalizacion(mensaje):
-    """Verifica si es un mensaje de finalización"""
     patron = r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}-FIN'
     return bool(re.match(patron, mensaje))
 
+#FUNCIÓN ENVIAR FINALIZACIÓN AL SIGUIENTE SERVICIO-------------------------
+#     Esta función construye y envía la señal de finalización al siguiente
+#     servicio en la cadena. Genera un timestamp actual y construye el
+#     mensaje con formato timestamp-FIN_CADENA.
+#
+#     PARÁMETROS:
+#          Ninguno
+#---------------------------------------------------------------------------
+
 def enviar_finalizacion_siguiente():
-    """Envía señal de finalización al siguiente servicio en la cadena"""
     timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     mensaje_fin = f"{timestamp}-FIN_CADENA"
     
@@ -73,8 +102,18 @@ def enviar_finalizacion_siguiente():
     except Exception as e:
         print(f"Error enviando señal de finalización: {e}")
 
+#FUNCIÓN MANEJAR CLIENTE----------------------------------------------------
+#     Esta función se ejecuta en un hilo separado para manejar cada conexión
+#     de cliente que llega al servidor. Procesa los mensajes recibidos,
+#     verifica si son señales de finalización y, en caso contrario,
+#     solicita una nueva palabra al usuario para continuar la cadena.
+#
+#     PARÁMETROS:
+#          conn = objeto de conexión del socket cliente
+#          addr = dirección del cliente conectado
+#---------------------------------------------------------------------------
+
 def manejar_cliente(conn, addr):
-    """Maneja conexiones entrantes desde el servicio 4"""
     global servidor_activo
     try:
         data = conn.recv(1024).decode('utf-8')
@@ -83,26 +122,25 @@ def manejar_cliente(conn, addr):
             
         print(f"Mensaje recibido de Servicio 4: {data}")
         
-        # Verificar si es señal de finalización
+        # VERIFICAR SI ES SEÑAL DE FINALIZACIÓN------------------------------
         if es_mensaje_finalizacion(data):
             print("Señal de finalización recibida del Servicio 4")
             enviar_finalizacion_siguiente()
             servidor_activo = False
             return
         
-        # Procesar mensaje normal usando regex para parsing correcto
+        # PROCESAR MENSAJE NORMAL CON EXPRESIONES REGULARES------------------
         patron = r'^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})-(\d+)-(\d+)-(.+)$'
         match = re.match(patron, data)
         
         if match:
             timestamp, largo_minimo, largo_actual, mensaje_actual = match.groups()
             
-            # Solicitar nueva palabra
             nueva_palabra = input("Ingrese una nueva palabra: ").strip()
             while not nueva_palabra:
                 nueva_palabra = input("La palabra no puede estar vacía. Ingrese una nueva palabra: ").strip()
             
-            # Actualizar mensaje
+            # CONSTRUIR MENSAJE ACTUALIZADO----------------------------------
             mensaje_actualizado = f"{mensaje_actual} {nueva_palabra}"
             nuevo_largo = len(mensaje_actualizado.split())
             nuevo_timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -111,8 +149,7 @@ def manejar_cliente(conn, addr):
             
             print(f"Mensaje actualizado: {mensaje_completo}")
             
-            # Enviar al servicio 2
-            time.sleep(1)  # Pequeña pausa para evitar conflictos
+            time.sleep(1)  
             enviar_a_servicio2(mensaje_completo)
         else:
             print("Error: Formato de mensaje inválido en Servicio 1")
@@ -122,14 +159,23 @@ def manejar_cliente(conn, addr):
     finally:
         conn.close()
 
+#FUNCIÓN EJECUTAR SERVIDOR TCP----------------------------------------------
+#     Esta función ejecuta el servidor TCP que escucha conexiones entrantes
+#     en el puerto especificado. Utiliza threading para manejar múltiples
+#     conexiones simultáneas y mantiene un timeout para permitir verificar
+#     el estado del servidor periódicamente.
+#
+#     PARÁMETROS:
+#          Ninguno (utiliza variables globales)
+#---------------------------------------------------------------------------
+
 def ejecutar_servidor():
-    """Ejecuta el servidor TCP"""
     global servidor_activo
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_sock:
         server_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         server_sock.bind((HOST, PORT_SERVIDOR))
         server_sock.listen(5)
-        server_sock.settimeout(1.0)  # Timeout para permitir verificar servidor_activo
+        server_sock.settimeout(1.0)
         
         print(f"Servicio 1 escuchando en {HOST}:{PORT_SERVIDOR}")
         
@@ -149,18 +195,21 @@ def ejecutar_servidor():
                     print(f"Error en servidor: {e}")
                 break
 
+#FUNCIÓN PRINCIPAL DEL PROGRAMA---------------------------------------------
+
 def main():
-    """Función principal"""
     global servidor_activo
-    # Iniciar servidor en hilo separado
+    
+    # INICIAR SERVIDOR EN HILO SEPARADO-------------------------------------
     servidor_thread = threading.Thread(target=ejecutar_servidor)
     servidor_thread.daemon = True
     servidor_thread.start()
+    time.sleep(1.5)
     
-    # Iniciar interacción
+    # INICIALIZAR LA INTERACCIÓN CON EL USUARIO-----------------------------
     iniciar_interaccion()
     
-    # Mantener el servicio activo
+    # MANTENER EL SERVICIO ACTIVO-------------------------------------------
     try:
         while servidor_activo:
             time.sleep(1)
@@ -169,6 +218,8 @@ def main():
     finally:
         print("Finalizando Servicio 1...")
         servidor_activo = False
+
+#EJECUCIÓN DEL PROGRAMA PRINCIPAL-------------------------------------------
 
 if __name__ == "__main__":
     main()
