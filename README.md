@@ -12,6 +12,7 @@
 - Se utilizó la librería "threading" de Python para el manejo de múltiples conexiones y mejor visualización.
 - Se interpretó que el valor del largo mínimo debía ser el número de palabras, no de caracteres.
 - El archivo de salida se sobrescribe en cada ejecución
+- <img width="918" height="426" alt="imagen" src="https://github.com/user-attachments/assets/cf8c3a6a-6bb8-4dc0-ae5f-e7ebc3a8cce0" />
 
 ## Instrucciones de Ejecución
 
