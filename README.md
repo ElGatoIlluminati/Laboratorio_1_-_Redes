@@ -7,16 +7,15 @@
 | Francisca Salinas | 202173569-0 |
 | Camila Rosales | 202173631-k |
 
-## Instrucciones de ejecución:
-1.- 
-
 ## Aclaraciones:
 - Esta tarea se desarrollo con Python 3.10 y superiores
-- Se utilizó la librería "threading" de Python para manejo de múltiples conexiones.
+- Se utilizó la librería "threading" de Python para el manejo de múltiples conexiones y mejor visualización.
 - Se interpretó que el valor del largo mínimo debía ser el número de palabras, no de caracteres.
 - El archivo de salida se sobrescribe en cada ejecución
 
 ## Instrucciones de Ejecución
+
+La tarea se desarrollo a lo largo de 4 archivos distintos, uno para cada servicio, y se ejecuta de la siguiente manera: 
 
 ### 1. Los servicios se ejecutaron en el siguiente orden (cada uno en una terminal separada):
 
