@@ -20,7 +20,6 @@ class Servicio2:
             print(f"Error enviando mensaje al Servicio 3: {e}")
 
     def manejar_cliente(self, conn, addr):
-        """Maneja conexiones entrantes desde el servicio 1"""
         try:
             data = conn.recv(1024).decode('utf-8')
             if not data:
