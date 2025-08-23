@@ -1,9 +1,4 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
-"""
-Servicio 1 - Servidor TCP que inicia la cadena del juego
-Laboratorio 1 - Redes de Computadores
-"""
+#Servicio 1 Servidor TCP Cliente TCP
 
 import socket
 import datetime
@@ -14,8 +9,8 @@ import re
 class Servicio1:
     def __init__(self):
         self.host = 'localhost'
-        self.port_servidor = 8001  # Puerto donde escucha este servicio
-        self.port_destino = 8002   # Puerto del servicio 2
+        self.port_servidor = 8001 
+        self.port_destino = 8002  
         self.servidor_activo = True
         self.largo_minimo = 0
         self.palabra_inicial = ""
@@ -24,7 +19,6 @@ class Servicio1:
         """Solicita los datos iniciales y comienza el juego"""
         print("=== SERVICIO 1 - INICIO DE INTERACCIÓN ===")
         
-        # Solicitar largo mínimo
         while True:
             try:
                 self.largo_minimo = int(input("Ingrese el largo mínimo del mensaje final: "))
@@ -35,12 +29,10 @@ class Servicio1:
             except ValueError:
                 print("Por favor, ingrese un número válido")
         
-        # Solicitar palabra inicial
         self.palabra_inicial = input("Ingrese la palabra inicial: ").strip()
         while not self.palabra_inicial:
             self.palabra_inicial = input("La palabra no puede estar vacía. Ingrese la palabra inicial: ").strip()
         
-        # Crear mensaje inicial
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         largo_actual = len(self.palabra_inicial.split())
         mensaje = f"{timestamp}-{self.largo_minimo}-{largo_actual}-{self.palabra_inicial}"
@@ -59,7 +51,6 @@ class Servicio1:
             print(f"Error enviando mensaje al Servicio 2: {e}")
 
     def manejar_cliente(self, conn, addr):
-        """Maneja conexiones entrantes desde el servicio 4"""
         try:
             data = conn.recv(1024).decode('utf-8')
             if not data:
@@ -67,25 +58,21 @@ class Servicio1:
                 
             print(f"Mensaje recibido de Servicio 4: {data}")
             
-            # Verificar si es señal de finalización
             if self.es_mensaje_finalizacion(data):
                 print("Señal de finalización recibida del Servicio 4")
                 self.finalizar_servicio()
                 return
             
-            # Procesar mensaje normal usando regex para parsing correcto
             patron = r'^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})-(\d+)-(\d+)-(.+)$'
             match = re.match(patron, data)
             
             if match:
                 timestamp, largo_minimo, largo_actual, mensaje_actual = match.groups()
                 
-                # Solicitar nueva palabra
                 nueva_palabra = input("Ingrese una nueva palabra: ").strip()
                 while not nueva_palabra:
                     nueva_palabra = input("La palabra no puede estar vacía. Ingrese una nueva palabra: ").strip()
                 
-                # Actualizar mensaje
                 mensaje_actualizado = f"{mensaje_actual} {nueva_palabra}"
                 nuevo_largo = len(mensaje_actualizado.split())
                 nuevo_timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -128,12 +115,11 @@ class Servicio1:
         self.servidor_activo = False
 
     def ejecutar_servidor(self):
-        """Ejecuta el servidor TCP"""
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as server_sock:
             server_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             server_sock.bind((self.host, self.port_servidor))
             server_sock.listen(5)
-            server_sock.settimeout(1.0)  # Timeout para permitir verificar servidor_activo
+            server_sock.settimeout(1.0)  
             
             print(f"Servicio 1 escuchando en {self.host}:{self.port_servidor}")
             
@@ -154,16 +140,12 @@ class Servicio1:
                     break
 
     def ejecutar(self):
-        """Ejecuta el servicio completo"""
-        # Iniciar servidor en hilo separado
         servidor_thread = threading.Thread(target=self.ejecutar_servidor)
         servidor_thread.daemon = True
         servidor_thread.start()
         
-        # Iniciar interacción
         self.iniciar_interaccion()
         
-        # Mantener el servicio activo
         try:
             while self.servidor_activo:
                 time.sleep(1)
