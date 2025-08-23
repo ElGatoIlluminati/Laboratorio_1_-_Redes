@@ -4,9 +4,9 @@ import threading
 import time
 import os
 import re
-from http.server import HTTPServer, BaseHTTPRequestHandler
+import http.server
 
-class HTTPHandler(BaseHTTPRequestHandler):
+class HTTPHandler(http.server.BaseHTTPRequestHandler):
     def __init__(self, servicio_instance, *args, **kwargs):
         self.servicio = servicio_instance
         super().__init__(*args, **kwargs)
@@ -127,7 +127,7 @@ class Servicio4:
 
     def ejecutar_servidor_http(self):
         try:
-            server = HTTPServer((self.host, self.port_servidor), self.crear_handler())
+            server = http.server.HTTPServer((self.host, self.port_servidor), self.crear_handler())
             server.timeout = 1.0
             print(f"Servicio 4 escuchando en {self.host}:{self.port_servidor} (HTTP)")
             while self.servidor_activo:
