@@ -15,20 +15,19 @@ class Servicio1:
 
     def iniciar_interaccion(self):
         print("SERVICIO 1")
-        
         while True:
             try:
-                self.largo_min = int(input("Ingrese el largo mínimo mensaje final: "))
+                self.largo_min = int(input("Largo mínimo del mensaje final: "))
                 if self.largo_min > 0:
                     break
                 else:
-                    print("Largo mínimo debe ser mayor a 0")
+                    print("Largo mínimo debe ser mayor a 0.")
             except ValueError:
-                print("Numero no valido")
+                print("Ingrese un número válido, por favor.")
         
-        self.p_inicial = input("Palabra inicial: ").strip()
+        self.p_inicial = input("Ingrese una palabra inicial: ").strip()
         while not self.p_inicial:
-            self.p_inicial = input("No puede estar vacía. Ingresar palabra inicial: ").strip()
+            self.p_inicial = input("No puede ingresar algo vacío, ingrese una palabra inicial: ").strip()
         
         timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         l_actual = len(self.p_inicial.split())
@@ -42,9 +41,9 @@ class Servicio1:
             with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
                 sock.connect((self.host, self.port_destino))
                 sock.send(mensaje.encode('utf-8'))
-                print(f"Mensaje enviado a Servicio 2: {mensaje}")
-        except Exception as e:
-            print(f"Error enviando mensaje a Servicio 2: {e}")
+                print(f"Mensaje enviado al servicio 2: {mensaje}")
+        except Exception as error:
+            print(f"Error enviando mensaje al servicio 2: {error}")
 
     def manejar_cliente(self, conn, addr):
         try:
@@ -52,10 +51,10 @@ class Servicio1:
             if not data:
                 return
                 
-            print(f"Mensaje recibido de Servicio 4: {data}")
+            print(f"Mensaje recibido del servicio 4: {data}")
             
             if self.es_mensaje_finalizacion(data):
-                print("Señal de finalización recibida del Servicio 4")
+                print("Fin del servicio, según lo informado por el servicio 4")
                 self.fin_servicio()
                 return
             
@@ -79,10 +78,10 @@ class Servicio1:
                 time.sleep(1)  
                 self.enviar_a_servicio2(mensaje_completo)
             else:
-                print("Error: Formato de mensaje inválido en Servicio 1")
+                print("Error: Formato de mensaje inválido en el servicio 1")
                 
-        except Exception as e:
-            print(f"Error manejando cliente: {e}")
+        except Exception as error:
+            print(f"Error manejando cliente: {error}")
         finally:
             conn.close()
 
@@ -98,8 +97,8 @@ class Servicio1:
                 sock.connect((self.host, self.port_destino))
                 sock.send(mensaje_fin.encode('utf-8'))
                 print(f"Señal de finalización enviada al Servicio 2: {mensaje_fin}")
-        except Exception as e:
-            print(f"Error enviando señal finalización: {e}")
+        except Exception as error:
+            print(f"Error enviando señal finalización: {error}")
 
     def fin_servicio(self):
         print("finalizando servicio 1...")
@@ -125,9 +124,9 @@ class Servicio1:
                     client_thread.start()
                 except socket.timeout:
                     continue
-                except Exception as e:
+                except Exception as error:
                     if self.servidor_activo:
-                        print(f"Error en servidor: {e}")
+                        print(f"Error en servidor: {error}")
                     break
 
     def ejecutar(self):
