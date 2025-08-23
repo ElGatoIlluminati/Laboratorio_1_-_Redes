@@ -1,5 +1,3 @@
-#Servicio 1 Servidor TCP Cliente TCP
-
 import socket
 import datetime
 import threading
