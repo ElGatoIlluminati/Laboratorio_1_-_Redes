@@ -114,7 +114,6 @@ class Servicio3:
                     break
 
     def ejecutar(self):
-        """Ejecuta el servicio completo"""
         print("=== SERVICIO 3 - UDP SERVER / HTTP CLIENT ===")
         
         servidor_thread = threading.Thread(target=self.ejecutar_servidor_udp)
