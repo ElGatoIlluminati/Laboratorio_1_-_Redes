@@ -41,7 +41,7 @@ python3 servicio4.py
 
 ### 3. Seguir las instrucciones dadas en la terminal correspondiente (seguir el orden anteriormente mencionado)
 
-### 4. Cuando se alcanza el largo mínimo, el Servicio 4 guarda el mensaje en `mensaje_final.txt` (Se inicia la cadena de finalización automáticamente y todos los servicios se cierran)
+### 4. Cuando se alcanza el largo mínimo, el Servicio 4 guarda el mensaje en `mensaje_final.txt` (Se inicia la cadena de finalización automáticamente y todos los servicios se cierran en orden)
 
 ## Configuración de Puertos
 
