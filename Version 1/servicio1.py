@@ -70,6 +70,7 @@ class Servicio1:
             # Verificar si es señal de finalización
             if self.es_mensaje_finalizacion(data):
                 print("Señal de finalización recibida del Servicio 4")
+                self.enviar_finalizacion_siguiente()
                 self.finalizar_servicio()
                 return
             
@@ -106,8 +107,9 @@ class Servicio1:
             conn.close()
 
     def es_mensaje_finalizacion(self, mensaje):
-        """Verifica si el mensaje es una señal de finalización"""
-        return mensaje.count('-') == 1 and "FIN" in mensaje.upper()
+        # Patrón: cualquier timestamp seguido de -FIN_CADENA
+        patron = r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}-FIN'
+        return bool(re.match(patron, mensaje))
 
     def enviar_finalizacion_siguiente(self):
         """Envía señal de finalización al siguiente servicio en la cadena"""

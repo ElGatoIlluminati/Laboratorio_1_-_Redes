@@ -144,8 +144,9 @@ class Servicio4:
             print(f"Error guardando archivo: {e}")
 
     def es_mensaje_finalizacion(self, mensaje):
-        """Verifica si el mensaje es una señal de finalización"""
-        return mensaje.count('-') == 1 and "FIN" in mensaje.upper()
+        # Patrón: cualquier timestamp seguido de -FIN_CADENA
+        patron = r'^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}-FIN'
+        return bool(re.match(patron, mensaje))
 
     def iniciar_finalizacion(self):
         """Inicia la cadena de finalización"""
